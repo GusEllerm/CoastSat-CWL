@@ -49,7 +49,7 @@ export NIWA_TIDE_API_KEY=your_api_key
 
 ## Configuration
 
-- Filtered inputs (`inputs/*.geojson`) are already provided; regenerate with `python3 scripts/filter_inputs_simple.py` if the source data changes.
+- Filtered inputs (`inputs/*.geojson`) are already provided; regenerate with `python3 scripts/setup/filter_inputs_simple.py` if the source data changes.
 - The workflow reads Google Earth Engine credentials from `.private-key.json` by default and loads `.env` via `python-dotenv`.
 - Optional test mode variables (set in `.env`) limit data retrieval:
   ```env

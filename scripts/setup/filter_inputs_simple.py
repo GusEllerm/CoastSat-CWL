@@ -59,9 +59,9 @@ def filter_geojson_simple(input_path, output_path, site_ids, id_key='id'):
 
 def main():
     """Main function to filter all input GeoJSON files."""
-    # Paths
-    coastsat_dir = Path(__file__).parent.parent / 'CoastSat'
-    inputs_dir = Path(__file__).parent.parent / 'inputs'
+    # Paths (go up 3 levels from file to project root: file -> setup -> scripts -> root)
+    coastsat_dir = Path(__file__).parent.parent.parent / 'CoastSat'
+    inputs_dir = Path(__file__).parent.parent.parent / 'inputs'
     inputs_dir.mkdir(exist_ok=True)
     
     # Filter polygons.geojson
