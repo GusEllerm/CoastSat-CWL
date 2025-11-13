@@ -1,0 +1,23 @@
+coastsat_package
+geopandas
+scipy
+matplotlib
+matplotlib_venn
+numpy<2
+python-dotenv
+openpyxl
+pandas
+requests
+tqdm
+earthengine-api
+scikit-learn
+astropy
+pytz
+# Optional: pyfes (not available on PyPI, only needed for compute_tide functions which aren't used in this workflow)
+# The workflow uses NIWA API for tides instead
+# pyfes
+# Note: GDAL Python bindings should be installed separately on macOS with Homebrew.
+# After installing dependencies, run:
+# export GDAL_CONFIG=$(brew --prefix gdal)/bin/gdal-config
+# pip install --no-cache-dir gdal==$(gdal-config --version)
+# Or use conda: conda install -c conda-forge geopandas gdal

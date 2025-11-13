@@ -13,8 +13,15 @@ dist/
 build/
 
 # Project specific
-CoastSat/
+# Ignore data directories (outputs)
 data/
+CoastSat-minimal/data/
+CoastSat-CWL/data/
+
+# Ignore large CoastSat data directories (but allow reference data in CoastSat-minimal/CoastSat/)
+# Keep CoastSat-minimal/CoastSat/ for validation reference
+CoastSat/data/
+
 *.log
 
 # Credentials and secrets (NEVER COMMIT THESE!)
