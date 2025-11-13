@@ -72,18 +72,27 @@ CoastSat-CWL/
 
 ### Docker Image Development Plan
 
-**Phase 1: Base Image Creation**
-- [ ] Create `docker/Dockerfile` based on Python 3.11
-- [ ] Install system dependencies (GDAL, proj, geos, etc.)
-- [ ] Copy and install Python requirements
-- [ ] Test image with basic CoastSat import
-- [ ] Tag and publish base image (or document local build process)
+**Phase 1: Base Image Creation** ✅ COMPLETE
+- [x] Create `docker/Dockerfile` based on Python 3.11-slim
+- [x] Install system dependencies (GDAL, proj, geos, spatialindex, etc.)
+  - Includes Qt libraries for PyQt5 (optimized build)
+- [x] Copy and install Python requirements
+  - Separate GDAL Python bindings installation to match system version
+  - Optimized PyQt5 installation (split dependencies, memory-efficient)
+- [x] Test image with basic CoastSat import
+  - Verified: `from coastsat import SDS_download, SDS_tools` ✓
+  - All geospatial libraries functional (GDAL, GeoPandas)
+- [x] Tag and publish base image (or document local build process)
+  - Image tagged: `coastsat-cwl:latest`
+  - Local build process documented in `docker/README.md`
+  - Build script: `docker/build.sh`
+  - Test script: `docker/test.sh`
 
-**Phase 2: Image Optimization**
+**Phase 2: Image Optimization** (Future)
 - [ ] Multi-stage build for size optimization
 - [ ] Layer caching optimization
 - [ ] Health checks and metadata labels
-- [ ] Documentation for image usage
+- [ ] Documentation for image usage (✅ Basic docs complete)
 
 ## CWL Tool Definitions
 
@@ -113,27 +122,54 @@ Each Python script becomes a CWL CommandLineTool with:
 
 ## Step-by-Step Conversion Plan
 
-### Phase 1: Infrastructure Setup
+### Phase 1: Infrastructure Setup ✅ COMPLETE
 
 **Goal**: Establish Docker and CWL development environment
 
-1. **Docker Environment**
-   - [ ] Create `docker/Dockerfile` with base image
-   - [ ] Create `docker/.dockerignore`
-   - [ ] Build and test base image
-   - [ ] Document image build process
+1. **Docker Environment** ✅
+   - [x] Create `docker/Dockerfile` with base image
+     - Python 3.11-slim base
+     - GDAL, proj, geos, spatialindex system dependencies
+     - Python dependencies from requirements.txt
+     - GDAL Python bindings matching system version
+     - Optimized PyQt5/Jupyter handling (memory optimizations)
+   - [x] Create `docker/.dockerignore`
+     - Excludes credentials, test files, build artifacts
+   - [x] Build and test base image
+     - Image built successfully: `coastsat-cwl:latest`
+     - CoastSat imports verified in Docker container
+     - All dependencies tested and working
+   - [x] Document image build process
+     - `docker/README.md` with build instructions
+     - `docker/MEMORY_ISSUES.md` troubleshooting guide
+     - Build and test scripts (`build.sh`, `test.sh`)
 
-2. **CWL Project Structure**
-   - [ ] Create `tools/` directory for CWL tool definitions
-   - [ ] Create `workflows/` directory for workflow definitions
-   - [ ] Create `schemas/` directory for custom schemas (if needed)
-   - [ ] Create `test/` directory for test data and validation
+2. **CWL Project Structure** ✅
+   - [x] Create `tools/` directory for CWL tool definitions
+   - [x] Create `workflows/` directory for workflow definitions
+   - [x] Create `schemas/` directory for custom schemas (if needed)
+   - [x] Create `test/` directory for test data and validation
+     - Organized structure: `inputs/`, `expected/`, `outputs/cwl/`, `outputs/temp/`
+     - Gitignore configuration for test outputs
+     - Cleanup scripts for output management
 
-3. **Development Tools**
-   - [ ] Install CWL runner (cwltool)
-   - [ ] Install CWLProv for provenance tracking
-   - [ ] Set up validation scripts
-   - [ ] Create test harness for comparing outputs
+3. **Development Tools** ✅
+   - [x] Install CWL runner (cwltool)
+     - Version: 3.1.20251031082601
+     - Verified with simple CWL test (`test/test_simple.cwl`)
+   - [x] Install CWLProv for provenance tracking
+     - Version: 0.1.1
+     - Ready for provenance generation once workflows are created
+   - [x] Set up validation scripts
+     - `test/validate_cwl.py` - Validates CWL files
+     - `test/compare_outputs.py` - Compares CWL vs minimal outputs
+     - `test/run_cwl_workflow.py` - Executes CWL workflows
+     - `test/test_harness.sh` - Comprehensive test suite
+     - `test/cleanup.sh` - Test output cleanup
+   - [x] Create test harness for comparing outputs
+     - Test harness validates environment, tools, and structure
+     - Organized output directories prevent test directory pollution
+     - Automated cleanup of temporary files
 
 ### Phase 2: Individual Tool Conversion
 
@@ -346,7 +382,16 @@ CoastSat-CWL/
 ├── test/
 │   ├── inputs/          # Test input data
 │   ├── expected/        # Expected outputs for validation
-│   └── test-workflow.sh # Test harness
+│   ├── outputs/         # Test outputs (gitignored)
+│   │   ├── cwl/        # CWL workflow outputs
+│   │   └── temp/       # Temporary test outputs
+│   ├── validate_cwl.py # CWL validation script
+│   ├── compare_outputs.py # Output comparison script
+│   ├── run_cwl_workflow.py # Workflow execution script
+│   ├── test_harness.sh # Comprehensive test suite
+│   ├── cleanup.sh      # Test output cleanup
+│   ├── test_simple.cwl # Simple CWL test tool
+│   └── README.md       # Test documentation
 ├── examples/
 │   ├── workflow-input.yml
 │   └── README.md
@@ -395,10 +440,20 @@ CoastSat-CWL/
 
 ## Timeline and Milestones
 
-### Milestone 1: Infrastructure (Week 1-2)
-- Docker base image built and tested
-- CWL project structure established
-- Development environment ready
+### Milestone 1: Infrastructure (Week 1-2) ✅ COMPLETE
+- ✅ Docker base image built and tested
+  - Image: `coastsat-cwl:latest`
+  - All dependencies verified
+  - Memory optimizations documented
+- ✅ CWL project structure established
+  - All directories created
+  - Test infrastructure organized
+  - Gitignore configured
+- ✅ Development environment ready
+  - cwltool installed and tested
+  - cwlprov installed
+  - Validation scripts created
+  - Test harness functional
 
 ### Milestone 2: Core Tools (Week 3-5)
 - Batch processing tools converted and tested
@@ -447,21 +502,24 @@ CoastSat-CWL/
 
 ## Success Criteria
 
-1. ✅ All tools successfully converted to CWL
-2. ✅ Full workflow executes end-to-end
-3. ✅ Outputs match minimal implementation (within tolerance)
-4. ✅ Provenance records generated successfully
-5. ✅ Component E2.2 requirements met
-6. ✅ Documentation complete and clear
-7. ✅ Docker environment reproducible
+1. ⏳ All tools successfully converted to CWL (Phase 2 - Pending)
+2. ⏳ Full workflow executes end-to-end (Phase 3 - Pending)
+3. ⏳ Outputs match minimal implementation (within tolerance) (Phase 4 - Pending)
+4. ⏳ Provenance records generated successfully (Phase 4 - Pending)
+5. ⏳ Component E2.2 requirements met (Phase 4 - Pending)
+6. ⏳ Documentation complete and clear (Phase 5 - Pending)
+7. ✅ Docker environment reproducible **COMPLETE**
 
 ## Next Steps
 
-1. Review and approve this plan
-2. Set up development environment
-3. Begin Phase 1: Infrastructure Setup
-4. Create initial Docker base image
-5. Start tool conversion with simplest tool first (e.g., `make-xlsx.cwl`)
+1. ✅ Review and approve this plan
+2. ✅ Set up development environment
+3. ✅ Begin Phase 1: Infrastructure Setup **COMPLETE**
+4. ✅ Create initial Docker base image **COMPLETE**
+5. **Next**: Begin Phase 2: Individual Tool Conversion
+   - Start with simplest tool first (e.g., `make-xlsx.cwl`)
+   - Convert one tool at a time
+   - Test and validate each tool before moving to next
 
 ## References
 
