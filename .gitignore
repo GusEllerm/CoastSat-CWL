@@ -1,0 +1,61 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Project specific
+CoastSat/
+data/
+*.log
+
+# Credentials and secrets (NEVER COMMIT THESE!)
+.private-key.json
+.private-key.json.example
+.env
+.env.local
+.env.*.local
+# Allow env.example as a template
+!.env.example
+!env.example
+*.pem
+*.key
+# Exclude JSON credential files but allow other JSON files
+*-credentials.json
+*-key.json
+*-secret.json
+*.json
+!package.json
+!tsconfig.json
+!pyrightconfig.json
+!inputs/*.geojson
+
+# IDE
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
+# Temporary files
+*.tmp
+*.temp
+*.xlsx
+*.xlsm
+*.xlsb
+*.xls
+transects.xlsx
+.cache/
