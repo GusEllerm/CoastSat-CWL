@@ -1,0 +1,24 @@
+# CoastSat-CWL requirements (minimal for CWL workflow)
+# This excludes Jupyter dependencies (jupyterlab, PyQt5) which are not needed for CWL execution
+
+# Core CoastSat functionality (note: coastsat_package pulls in jupyterlab, so we may need to install coastsat modules differently)
+# For now, try installing without jupyterlab dependency
+geopandas
+scipy
+matplotlib
+matplotlib_venn
+numpy<2
+python-dotenv
+openpyxl
+pandas
+requests
+tqdm
+earthengine-api
+scikit-learn
+astropy
+pytz
+scikit-image
+
+# Try installing coastsat_package but exclude jupyterlab
+# We'll install the coastsat package manually if needed, or find an alternative
+# coastsat_package

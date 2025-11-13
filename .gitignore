@@ -66,3 +66,13 @@ CoastSat/data/
 *.xls
 transects.xlsx
 .cache/
+
+# Test outputs (CWL workflow outputs)
+CoastSat-CWL/test/outputs/*
+!CoastSat-CWL/test/outputs/.gitkeep
+!CoastSat-CWL/test/outputs/temp/.gitkeep
+# Ignore hash-named output files from cwltool
+CoastSat-CWL/test/*[0-9a-f]{40}*
+# Ignore any temporary files in test directory
+CoastSat-CWL/test/tmp/
+CoastSat-CWL/test/*.out
