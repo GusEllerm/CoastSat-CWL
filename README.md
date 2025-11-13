@@ -1,6 +1,6 @@
-# CoastSat-CWL Minimal Kit
+# CoastSat-CWL 
 
-This repository contains a pared-down CoastSat environment that preserves the coastal shoreline processing pipeline while removing legacy visualisation code and excess data. It serves as the staging area for refactoring the workflow into CWL components and provides tooling to verify behaviour against the published CoastSat outputs.
+This repository contains a pared-down CoastSat environment that preserves the coastal shoreline processing pipeline. This is in prep for the CWL componentisation.
 
 ## Contents
 
@@ -59,10 +59,3 @@ python3 tests/compare_with_original.py --sites nzd0001 # Manual comparison
 ```
 
 Known differences (for example the despike step) and interpretation guidance are documented in `docs/validation.md`.
-
-## Next Steps
-
-- Keep credentials out of version control (`.private-key.json`, `.env`).
-- Use the validation scripts after substantive changes.
-- Proceed with CWL componentisation once the repository layout and documentation meet project requirements.
-
