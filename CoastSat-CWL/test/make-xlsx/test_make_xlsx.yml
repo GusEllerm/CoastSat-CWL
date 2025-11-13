@@ -10,5 +10,5 @@ tides:
 site_id: nzd0001
 script:
   class: File
-  path: ../../tools/make_xlsx_wrapper.py
+  path: ../../tools/make-xlsx/make_xlsx_wrapper.py
 

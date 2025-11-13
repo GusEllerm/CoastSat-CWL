@@ -1,0 +1,23 @@
+site_id: sar0001
+polygons:
+  class: File
+  path: ../../../CoastSat-minimal/inputs/polygons.geojson
+shorelines:
+  class: File
+  path: ../../../CoastSat-minimal/inputs/shorelines.geojson
+transects_extended:
+  class: File
+  path: ../../../CoastSat-minimal/inputs/transects_extended.geojson
+output_dir:
+  class: Directory
+  path: outputs/data
+start_date: "2024-01-01"
+end_date: "2024-12-31"
+sat_list: ["L8", "L9"]
+gee_service_account: "coastsat-refactor@coastsat-478103.iam.gserviceaccount.com"
+gee_private_key:
+  class: File
+  path: "/Users/eller/Projects/CoastSat-CWL/.private-key.json"
+script:
+  class: File
+  path: ../../tools/batch-process-sar/batch_process_sar_wrapper.py

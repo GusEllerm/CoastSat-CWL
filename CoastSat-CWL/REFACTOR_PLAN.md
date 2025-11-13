@@ -177,50 +177,99 @@ Each Python script becomes a CWL CommandLineTool with:
 
 **2.1 Batch Processing Tools** (Parallel implementation)
 
-- [ ] **Tool: `batch-process-nz.cwl`**
-  - Inputs: GeoJSON files, site IDs list, date range, credentials
-  - Outputs: `transect_time_series.csv` files (one per site)
+- [x] **Tool: `batch-process-nz.cwl`** ✅ COMPLETE
+  - [x] CWL tool definition created
+  - [x] Python wrapper script (`batch_process_nz_wrapper.py`) created
+  - [x] Test inputs and test script created
+  - [x] Tool validated successfully
+  - Inputs: `polygons.geojson`, `shorelines.geojson`, `transects_extended.geojson`, `site_id`, `output_dir`, `start_date`, `end_date`, `sat_list`, `gee_service_account`, `gee_private_key`
+  - Outputs: `data/{site_id}/transect_time_series.csv` per site
   - Special considerations:
     - Site-level parallelization (each site can run independently)
-    - Google Earth Engine authentication (service account credentials)
-    - Large output data handling
+    - Google Earth Engine authentication (service account credentials via input or env vars)
+    - Network access required (configured via `NetworkAccess` requirement)
+    - Downloads satellite imagery from Google Earth Engine
+    - Extracts shorelines from imagery and computes transect intersections
+    - Large output data handling (satellite imagery downloads)
+    - Incremental processing (continues from last processed date if output exists)
+    - Long execution time (minutes to hours depending on date range and images)
 
-- [ ] **Tool: `batch-process-sar.cwl`**
-  - Similar structure to NZ tool
-  - Same considerations
+- [x] **Tool: `batch-process-sar.cwl`** ✅ COMPLETE
+  - [x] CWL tool definition created
+  - [x] Python wrapper script (`batch_process_sar_wrapper.py`) created
+  - [x] Test inputs and test script created
+  - [x] Tool validated successfully
+  - Inputs: `polygons.geojson`, `shorelines.geojson`, `transects_extended.geojson`, `site_id`, `output_dir`, `start_date`, `end_date`, `sat_list`, `gee_service_account`, `gee_private_key`
+  - Outputs: `data/{site_id}/transect_time_series.csv` per site
+  - Special considerations:
+    - Site-level parallelization (each site can run independently)
+    - Google Earth Engine authentication (service account credentials via input or env vars)
+    - Network access required (configured via `NetworkAccess` requirement)
+    - Downloads satellite imagery from Google Earth Engine
+    - Extracts shorelines from imagery and computes transect intersections
+    - Large output data handling (satellite imagery downloads)
+    - Incremental processing (continues from last processed date if output exists)
+    - Long execution time (minutes to hours depending on date range and images)
+    - SAR-specific settings: EPSG:3003 CRS, reference shoreline NOT flipped, 15m georeferencing threshold
 
 **2.2 Tidal Correction Tools**
 
-- [ ] **Tool: `tidal-correction-fetch.cwl`**
-  - Inputs: Site coordinates, date range, NIWA API key
-  - Outputs: `tides.csv` per site
+- [x] **Tool: `tidal-correction-fetch.cwl`** ✅ COMPLETE
+  - [x] CWL tool definition created
+  - [x] Python wrapper script (`tidal_correction_fetch_wrapper.py`) created
+  - [x] Test inputs and test script created
+  - [x] Tool validated successfully
+  - Inputs: `polygons.geojson`, `transect_time_series.csv`, `site_id`, `niwa_api_key` (optional if env var set)
+  - Outputs: `{site_id}_tides.csv` per site
   - Special considerations:
-    - API rate limiting handling
+    - API rate limiting handling (automatic retry with exponential backoff)
     - Error handling for API failures
-    - Per-site parallelization possible
+    - Per-site parallelization possible (designed for CWL scatter)
+    - API key can be provided via input or `NIWA_TIDE_API_KEY` environment variable
 
-- [ ] **Tool: `tidal-correction-apply.cwl`**
-  - Inputs: `transect_time_series.csv`, `tides.csv`, `transects_extended.geojson`
-  - Outputs: `transect_time_series_tidally_corrected.csv`
+- [x] **Tool: `tidal-correction-apply.cwl`** ✅ COMPLETE
+  - [x] CWL tool definition created
+  - [x] Python wrapper script (`tidal_correction_apply_wrapper.py`) created
+  - [x] Test inputs and test script created
+  - [x] Tool validated and tested successfully
+  - Inputs: `transect_time_series.csv`, `tides.csv`, `transects_extended.geojson`, `site_id`
+  - Outputs: `{site_id}_transect_time_series_tidally_corrected.csv`
   - Special considerations:
-    - Requires slopes from previous step
-    - Per-site processing
+    - Requires `beach_slope` values from previous step (slope estimation)
+    - Per-site processing (designed for CWL scatter)
+    - Applies despike algorithm to remove outliers
+    - No network access required (local file processing only)
 
 **2.3 Analysis Tools**
 
-- [ ] **Tool: `slope-estimation.cwl`**
-  - Inputs: `transect_time_series.csv`, `tides.csv`, `transects_extended.geojson`
-  - Outputs: Updated `transects_extended.geojson`
+- [x] **Tool: `slope-estimation.cwl`** ✅ COMPLETE
+  - [x] CWL tool definition created
+  - [x] Python wrapper script (`slope_estimation_wrapper.py`) created
+  - [x] Test inputs and test script created
+  - [x] Tool validated and tested successfully
+  - Inputs: `transect_time_series.csv`, `tides.csv`, `transects_extended.geojson`, `SDS_slope.py`, `site_id`
+  - Outputs: `{site_id}_transects_updated.geojson` (transects for the site with updated `beach_slope` values)
   - Special considerations:
-    - In-place file update (may need to copy then update)
-    - Per-site processing with aggregation
+    - Per-site processing (outputs transects for one site only)
+    - Requires `SDS_slope.py` module (staged via InitialWorkDirRequirement)
+    - Computationally intensive spectral analysis (may take several minutes)
+    - Only estimates slopes for transects without existing `beach_slope` values
+    - Workflow will need to aggregate per-site outputs into single `transects_extended.geojson`
 
-- [ ] **Tool: `linear-models.cwl`**
-  - Inputs: `transect_time_series_tidally_corrected.csv`, `transects_extended.geojson`
-  - Outputs: Updated `transects_extended.geojson`
+- [x] **Tool: `linear-models.cwl`** ✅ COMPLETE
+  - [x] CWL tool definition created
+  - [x] Python wrapper script (`linear_models_wrapper.py`) created
+  - [x] Test inputs and test script created
+  - [x] Tool validated and tested successfully
+  - Inputs: `transect_time_series_tidally_corrected.csv`, `transects_extended.geojson`, `site_id`
+  - Outputs: `{site_id}_transects_with_trends.geojson` (transects for the site with trend statistics)
   - Special considerations:
-    - Cumulative updates to transects file
-    - Per-site processing
+    - Per-site processing (outputs transects for one site only)
+    - Uses sklearn LinearRegression for trend calculation
+    - Calculates multiple statistics: trend, intercept, r2_score, mae, mse, rmse, n_points
+    - Converts dates to years since first date for regression
+    - Requires tidally corrected transect time series data (from `tidal-correction-apply` step)
+    - Workflow will need to aggregate per-site outputs into single `transects_extended.geojson`
 
 **2.4 Reporting Tool**
 
@@ -246,14 +295,49 @@ Each Python script becomes a CWL CommandLineTool with:
     2. `batch_process_sar` (optional, with scatter for sites)
     3. `tidal_correction_fetch` (with scatter for sites)
     4. `slope_estimation` (with scatter for sites)
-    5. `tidal_correction_apply` (with scatter for sites)
-    6. `linear_models` (with scatter for sites)
-    7. `make_xlsx` (with scatter for sites)
+    5. **Aggregate slope outputs** (merge per-site transects into single `transects_extended.geojson`)
+    6. `tidal_correction_apply` (with scatter for sites)
+    7. `linear_models` (with scatter for sites)
+    8. **Aggregate linear model outputs** (merge per-site transects into single `transects_extended.geojson`)
+    9. `make_xlsx` (with scatter for sites)
   
   - **Scatter Strategy**: 
     - Sites can be processed in parallel where independent
     - Use `scatter: [sites]` for parallelization
     - Sequential steps where dependencies exist (e.g., slope estimation before tidal correction apply)
+  
+  - **Aggregation Steps** (⚠️ **CRITICAL FOR WORKFLOW IMPLEMENTATION**):
+    - **After `slope_estimation`**: 
+      - Tool outputs per-site GeoJSON files: `{site_id}_transects_updated.geojson`
+      - Need to aggregate these into a single `transects_extended.geojson` file
+      - Aggregation approach:
+        - Create a merge/aggregate step that combines all per-site outputs
+        - Merge strategy: Load all per-site GeoJSON files, combine into single GeoDataFrame
+        - Preserve all transects (including those from other sites not processed in this run)
+        - Update `beach_slope`, `cil`, `ciu` columns from per-site outputs
+        - Output single `transects_extended.geojson` with updated slopes
+      - This aggregated file is then used as input to `tidal_correction_apply`
+    
+    - **After `linear_models`**:
+      - Tool outputs per-site GeoJSON files: `{site_id}_transects_with_trends.geojson`
+      - Need to aggregate these into a single `transects_extended.geojson` file
+      - Aggregation approach:
+        - Create a merge/aggregate step that combines all per-site outputs
+        - Merge strategy: Load all per-site GeoJSON files, combine into single GeoDataFrame
+        - Preserve all transects (including those from other sites not processed in this run)
+        - Update trend statistics columns (`trend`, `intercept`, `r2_score`, `mae`, `mse`, `rmse`, `n_points`) from per-site outputs
+        - Output single `transects_extended.geojson` with updated trend statistics
+      - This aggregated file is then used as input to `make_xlsx` and is the final output
+    
+    - **Aggregation Tool Options**:
+      - Option 1: Create dedicated `aggregate-transects.cwl` tool
+        - Inputs: Array of per-site GeoJSON files
+        - Output: Single aggregated `transects_extended.geojson`
+        - Python script merges GeoDataFrames using pandas/geopandas
+      - Option 2: Use inline Python expression in workflow
+        - Simpler but less reusable
+        - May be sufficient for this use case
+      - **Recommendation**: Option 1 for better provenance tracking and reusability
 
 - [ ] **Workflow Inputs:**
   - GeoJSON input files
@@ -263,7 +347,7 @@ Each Python script becomes a CWL CommandLineTool with:
 
 - [ ] **Workflow Outputs:**
   - All generated CSV files
-  - Updated `transects_extended.geojson`
+  - Updated `transects_extended.geojson` (aggregated from per-site outputs)
   - Excel reports per site
 
 ### Phase 4: Testing and Validation
@@ -338,7 +422,13 @@ Each Python script becomes a CWL CommandLineTool with:
 - Easier to trace data lineage
 - Aligns with immutable data principles
 
-**Exception**: `transects_extended.geojson` may need special handling (aggregate updates)
+**Exception**: `transects_extended.geojson` requires special handling (aggregate updates)
+  - **Problem**: `slope_estimation` and `linear_models` tools output per-site transects (`{site_id}_transects_updated.geojson` and `{site_id}_transects_with_trends.geojson`)
+  - **Solution**: Create aggregation steps in workflow (see Phase 3: Workflow Definition for details)
+  - **Implementation**: 
+    - After `slope_estimation` scatter: Aggregate per-site outputs → single `transects_extended.geojson` with updated `beach_slope` values
+    - After `linear_models` scatter: Aggregate per-site outputs → single `transects_extended.geojson` with updated trend statistics
+  - **Rationale**: Allows parallel per-site processing while maintaining single unified transects file for downstream steps
 
 ### 4. Credential Management
 
@@ -352,6 +442,21 @@ Each Python script becomes a CWL CommandLineTool with:
 - Use `EnvVarRequirement` or `secrets` in workflow
 - Document credential requirements
 - Provide example `.env` structure
+
+### 4b. Network Access Configuration
+
+**Decision**: Use CWL `NetworkAccess` requirement for tools that need external API access
+**Rationale**:
+- Tools need to access NIWA Tide API and Google Earth Engine
+- By default, cwltool uses `--net=none` which disables network access
+- `NetworkAccess` requirement explicitly enables network access where needed
+
+**Implementation**:
+- Add `NetworkAccess: { networkAccess: true }` to tools that need external APIs:
+  - `tidal-correction-fetch.cwl` (NIWA API)
+  - `batch-process-nz.cwl` (Google Earth Engine)
+  - `batch-process-sar.cwl` (Google Earth Engine)
+- Tools that only process local files don't need network access
 
 ### 5. Large Data Handling
 
@@ -371,13 +476,16 @@ CoastSat-CWL/
 │   ├── requirements.txt
 │   └── README.md
 ├── tools/
-│   ├── batch-process-nz.cwl
-│   ├── batch-process-sar.cwl
-│   ├── tidal-correction-fetch.cwl
-│   ├── tidal-correction-apply.cwl
-│   ├── slope-estimation.cwl
-│   ├── linear-models.cwl
-│   └── make-xlsx.cwl
+│   ├── README.md
+│   ├── make-xlsx/
+│   │   ├── make-xlsx.cwl
+│   │   └── make_xlsx_wrapper.py
+│   ├── tidal-correction-fetch/
+│   │   ├── tidal-correction-fetch.cwl
+│   │   └── tidal_correction_fetch_wrapper.py
+│   └── <tool-name>/          # Future tools follow this pattern
+│       ├── <tool-name>.cwl
+│       └── <tool-name>_wrapper.py
 ├── workflows/
 │   ├── coastsat-workflow.cwl
 │   ├── coastsat-workflow-test.cwl  # Test version with limited data

@@ -4,7 +4,7 @@ This directory contains test utilities and validation scripts for the CoastSat-C
 
 ## Directory Structure
 
-The test directory is organized with per-tool subdirectories. **All inputs, expected outputs, and outputs are within tool-specific subdirectories** - there are no top-level `inputs/`, `expected/`, or `outputs/` directories.
+The test directory is organized with per-tool subdirectories. 
 
 ```
 test/

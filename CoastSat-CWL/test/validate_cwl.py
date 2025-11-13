@@ -44,10 +44,11 @@ def main():
     
     all_valid = True
     
-    # Validate tools
+    # Validate tools (search in subdirectories)
     if tools_dir.exists():
         print("Validating CWL tools...")
-        for cwl_file in sorted(tools_dir.glob("*.cwl")):
+        # Search for CWL files in tools/ and all subdirectories
+        for cwl_file in sorted(tools_dir.rglob("*.cwl")):
             if not validate_cwl_file(cwl_file):
                 all_valid = False
     else:

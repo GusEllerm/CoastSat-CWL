@@ -12,7 +12,7 @@ inputs:
     type: File
     default:
       class: File
-      path: ../tools/make_xlsx_wrapper.py
+      path: make_xlsx_wrapper.py
     inputBinding:
       position: 0
     doc: "Python wrapper script"

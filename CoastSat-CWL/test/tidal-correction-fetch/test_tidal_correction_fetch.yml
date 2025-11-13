@@ -1,0 +1,12 @@
+polygons:
+  class: File
+  path: ../../../CoastSat-minimal/inputs/polygons.geojson
+transect_time_series:
+  class: File
+  path: ../../../CoastSat-minimal/data/nzd0001/transect_time_series.csv
+site_id: nzd0001
+# niwa_api_key is optional - will use NIWA_TIDE_API_KEY env var if not provided
+script:
+  class: File
+  path: ../../tools/tidal-correction-fetch/tidal_correction_fetch_wrapper.py
+

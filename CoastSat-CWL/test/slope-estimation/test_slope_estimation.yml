@@ -1,0 +1,17 @@
+transect_time_series:
+  class: File
+  path: ../../../CoastSat-minimal/data/nzd0001/transect_time_series.csv
+tides:
+  class: File
+  path: ../../../CoastSat-minimal/data/nzd0001/tides.csv
+transects_extended:
+  class: File
+  path: ../../../CoastSat-minimal/inputs/transects_extended.geojson
+site_id: nzd0001
+script:
+  class: File
+  path: ../../tools/slope-estimation/slope_estimation_wrapper.py
+sds_slope_module:
+  class: File
+  path: ../../../CoastSat-minimal/scripts/SDS_slope.py
+

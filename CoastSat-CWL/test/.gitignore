@@ -9,7 +9,8 @@ outputs/*
 !*/outputs/.gitkeep
 
 # Ignore hash-named output files from cwltool (stdout/stderr captures)
-[0-9a-f]*
+# Match only files that look like hash names (40+ hex characters) to avoid matching directory names
+[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]*
 
 # Ignore temporary files
 *.out

@@ -89,21 +89,26 @@ for dir in "${required_dirs[@]}"; do
 done
 echo ""
 
-# Step 5b: Run individual tool tests if they exist
-echo "Step 5b: Running individual tool tests..."
-echo "----------------------------------------"
-TOOL_TESTS=$(find "$PROJECT_ROOT/test" -mindepth 2 -maxdepth 2 -type f -name "test_*.sh" | sort)
-if [ -n "$TOOL_TESTS" ]; then
-    for test_script in $TOOL_TESTS; do
-        tool_dir=$(dirname "$test_script")
-        tool_name=$(basename "$tool_dir")
-        echo "Running tests for: $tool_name"
-        (cd "$tool_dir" && bash "$(basename "$test_script")" 2>&1 | grep -E "^(✅|❌|⚠️|Testing|Test Complete)" || true)
-    done
-else
-    echo "⚠️  No individual tool tests found"
-fi
-echo ""
+    # Step 5b: Run individual tool tests if they exist
+    echo "Step 5b: Running individual tool tests..."
+    echo "----------------------------------------"
+    TOOL_TESTS=$(find "$PROJECT_ROOT/test" -mindepth 2 -maxdepth 2 -type f -name "test_*.sh" | sort)
+    if [ -n "$TOOL_TESTS" ]; then
+        for test_script in $TOOL_TESTS; do
+            tool_dir=$(dirname "$test_script")
+            tool_name=$(basename "$tool_dir")
+            echo "Running tests for: $tool_name"
+            # Skip tests that require API keys or external services if not available
+            if [ "$tool_name" = "tidal-correction-fetch" ] && [ -z "$NIWA_TIDE_API_KEY" ]; then
+                echo "⚠️  Skipping $tool_name test (NIWA_TIDE_API_KEY not set)"
+                continue
+            fi
+            (cd "$tool_dir" && bash "$(basename "$test_script")" 2>&1 | grep -E "^(✅|❌|⚠️|Testing|Test Complete|Step)" || true)
+        done
+    else
+        echo "⚠️  No individual tool tests found"
+    fi
+    echo ""
 
 # Step 6: Clean up temporary test outputs
 echo "Step 6: Cleaning up temporary test outputs..."
