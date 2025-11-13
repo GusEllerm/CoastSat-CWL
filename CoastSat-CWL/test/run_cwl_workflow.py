@@ -75,8 +75,11 @@ def main():
     args = parser.parse_args()
     
     # Set default output directory
+    # When workflows are created, they'll have their own test/workflows/ directory
     if not args.outdir:
-        args.outdir = Path(__file__).parent / "outputs" / "cwl"
+        workflows_test_dir = Path(__file__).parent / "workflows" / "outputs"
+        workflows_test_dir.mkdir(parents=True, exist_ok=True)
+        args.outdir = workflows_test_dir
     
     args.outdir.mkdir(parents=True, exist_ok=True)
     

@@ -224,12 +224,17 @@ Each Python script becomes a CWL CommandLineTool with:
 
 **2.4 Reporting Tool**
 
-- [ ] **Tool: `make-xlsx.cwl`**
-  - Inputs: All CSV files per site, `transects_extended.geojson`
-  - Outputs: `{site}.xlsx` per site
+- [x] **Tool: `make-xlsx.cwl`** ✅ COMPLETE
+  - [x] CWL tool definition created
+  - [x] Python wrapper script (`make_xlsx_wrapper.py`) created
+  - [x] Test inputs and test script created
+  - [x] Tool validated and tested successfully
+  - Inputs: `transects_extended.geojson`, `transect_time_series_tidally_corrected.csv`, `tides.csv`, `site_id`
+  - Outputs: `{site_id}.xlsx` per site
   - Special considerations:
-    - Per-site processing
+    - Per-site processing (designed for CWL scatter)
     - Aggregation of multiple inputs
+    - Creates Excel file with 4 sheets: Intersects, Tides, Transects, Intersect points
 
 ### Phase 3: Workflow Definition
 

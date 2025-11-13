@@ -1,33 +1,48 @@
 # CWL Tools
 
-This directory contains CWL CommandLineTool definitions for each step of the CoastSat workflow.
+This directory contains CWL tool definitions for the CoastSat workflow.
 
-## Tool Definitions
+## Tools
 
-- `batch-process-nz.cwl` - Batch process NZ sites
-- `batch-process-sar.cwl` - Batch process SAR sites
-- `tidal-correction-fetch.cwl` - Fetch tide data from NIWA API
-- `tidal-correction-apply.cwl` - Apply tidal corrections
-- `slope-estimation.cwl` - Estimate beach slopes
-- `linear-models.cwl` - Compute linear shoreline change metrics
-- `make-xlsx.cwl` - Generate Excel reports
+### make-xlsx.cwl
 
-## Tool Structure
+Creates Excel reports from CoastSat outputs for a single site.
 
-Each tool definition includes:
-- Input declarations
-- Output declarations
-- Docker requirement (base image)
-- Base command and arguments
-- Environment variable handling
+**Inputs:**
+- `transects_extended`: GeoJSON file with transect definitions
+- `transect_time_series_tidally_corrected`: CSV with tidally corrected time series
+- `tides`: CSV with tide data
+- `site_id`: Site ID (e.g., "nzd0001")
 
-## Testing Individual Tools
+**Outputs:**
+- `excel_file`: Excel file (`{site_id}.xlsx`) with multiple sheets:
+  - Intersects: Transect intersection data
+  - Tides: Tide data
+  - Transects: Transect geometry and metadata
+  - Intersect points: Computed geographic points
 
+**Dependencies:**
+- Uses Docker image: `coastsat-cwl:latest`
+- Requires Python wrapper script: `make_xlsx_wrapper.py`
+
+**Testing:**
 ```bash
-cwltool tools/batch-process-nz.cwl tool-input.yml
+cd CoastSat-CWL
+./test/test_make_xlsx.sh
 ```
 
-## Dependencies
+**Status:** ✅ Complete and tested
 
-All tools use the base Docker image defined in `../docker/Dockerfile`.
+## Testing
 
+Each tool should have:
+1. A CWL tool definition (`.cwl` file)
+2. A Python wrapper script (if needed)
+3. A test input file (in `test/` directory)
+4. A test script (in `test/` directory)
+
+Test scripts should:
+- Validate the CWL tool
+- Run the tool with test inputs
+- Verify outputs
+- Compare with expected outputs if available

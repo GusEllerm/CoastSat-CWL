@@ -1,0 +1,14 @@
+transects_extended:
+  class: File
+  path: ../../../CoastSat-minimal/inputs/transects_extended.geojson
+transect_time_series_tidally_corrected:
+  class: File
+  path: ../../../CoastSat-minimal/data/nzd0001/transect_time_series_tidally_corrected.csv
+tides:
+  class: File
+  path: ../../../CoastSat-minimal/data/nzd0001/tides.csv
+site_id: nzd0001
+script:
+  class: File
+  path: ../../tools/make_xlsx_wrapper.py
+

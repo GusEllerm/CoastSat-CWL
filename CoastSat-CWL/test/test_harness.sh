@@ -30,21 +30,21 @@ echo ""
 # Step 2: Test simple CWL tool
 echo "Step 2: Testing simple CWL tool..."
 echo "----------------------------------------"
-if [ -f "test_simple.cwl" ]; then
+if [ -f "simple/test_simple.cwl" ]; then
     # Clean up any previous test outputs
-    rm -f outputs/temp/test_simple_* outputs/temp/*[0-9a-f]*
+    find simple/outputs -mindepth 1 -not -name '.gitkeep' -delete 2>/dev/null || true
     
-    echo "Running test_simple.cwl (outputs to outputs/temp/)..."
-    timeout 60 cwltool --outdir outputs/temp test_simple.cwl 2>&1 | head -20 || echo "Note: Test completed (may timeout, that's OK)"
+    echo "Running test_simple.cwl (outputs to simple/outputs/)..."
+    timeout 60 cwltool --outdir simple/outputs simple/test_simple.cwl 2>&1 | head -20 || echo "Note: Test completed (may timeout, that's OK)"
     
     # Check if output was created
-    if ls outputs/temp/test_output* 2>/dev/null | head -1 > /dev/null; then
-        echo "✅ Simple CWL tool test completed (output in outputs/temp/)"
+    if ls simple/outputs/test_output* 2>/dev/null | head -1 > /dev/null; then
+        echo "✅ Simple CWL tool test completed (output in simple/outputs/)"
     else
         echo "✅ Simple CWL tool test completed"
     fi
 else
-    echo "⚠️  test_simple.cwl not found, skipping"
+    echo "⚠️  test_simple.cwl not found in simple/, skipping"
 fi
 echo ""
 
@@ -89,6 +89,22 @@ for dir in "${required_dirs[@]}"; do
 done
 echo ""
 
+# Step 5b: Run individual tool tests if they exist
+echo "Step 5b: Running individual tool tests..."
+echo "----------------------------------------"
+TOOL_TESTS=$(find "$PROJECT_ROOT/test" -mindepth 2 -maxdepth 2 -type f -name "test_*.sh" | sort)
+if [ -n "$TOOL_TESTS" ]; then
+    for test_script in $TOOL_TESTS; do
+        tool_dir=$(dirname "$test_script")
+        tool_name=$(basename "$tool_dir")
+        echo "Running tests for: $tool_name"
+        (cd "$tool_dir" && bash "$(basename "$test_script")" 2>&1 | grep -E "^(✅|❌|⚠️|Testing|Test Complete)" || true)
+    done
+else
+    echo "⚠️  No individual tool tests found"
+fi
+echo ""
+
 # Step 6: Clean up temporary test outputs
 echo "Step 6: Cleaning up temporary test outputs..."
 echo "----------------------------------------"
@@ -101,9 +117,9 @@ echo "========================================="
 echo "Test Harness Complete"
 echo "========================================="
 echo ""
-echo "Test outputs organized in:"
-echo "  - outputs/temp/  - Temporary test outputs (cleaned up)"
-echo "  - outputs/cwl/   - CWL workflow outputs (for comparison)"
+echo "Test outputs organized in tool-specific directories:"
+echo "  - Each tool has its own outputs/ directory"
+echo "  - Workflow outputs will be in workflows/ directory when created"
 echo ""
 echo "Next steps:"
 echo "1. Begin Phase 2: Create CWL tool definitions"

@@ -4,16 +4,21 @@ outputs/*
 !outputs/temp/.gitkeep
 !outputs/cwl/.gitkeep
 
+# Ignore per-tool test outputs
+*/outputs/*
+!*/outputs/.gitkeep
+
 # Ignore hash-named output files from cwltool (stdout/stderr captures)
 [0-9a-f]*
 
 # Ignore temporary files
 *.out
 *.err
+*.tmp
 tmp/
 temp/
 
-# Ignore test data that might be generated
+# Ignore test data that might be generated (keep structure)
 *.csv
 *.geojson
 *.xlsx
@@ -21,4 +26,7 @@ temp/
 !expected/*.csv
 !expected/*.geojson
 !expected/*.xlsx
-
+!*/inputs/*.geojson
+!*/expected/*.csv
+!*/expected/*.geojson
+!*/expected/*.xlsx
