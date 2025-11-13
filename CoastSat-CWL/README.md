@@ -8,7 +8,11 @@ Common Workflow Language (CWL) components for the CoastSat coastal shoreline pro
 
 ## Overview
 
-This directory will contain CWL workflow definitions that enable portable, reproducible execution of the CoastSat pipeline across different workflow engines (e.g., cwltool, Toil, Arvados, Cromwell).
+This directory contains CWL workflow definitions that enable portable, reproducible execution of the CoastSat pipeline across different workflow engines (e.g., cwltool, Toil, Arvados, Cromwell).
+
+## Provenance Tracking
+
+The CWL workflow definitions enable automated provenance tracking through [CWLProv](https://github.com/common-workflow-language/cwlprov), which generates detailed execution metadata following the [PROV](https://www.w3.org/TR/prov-overview/) data model. These provenance records form **Component E2.2** of the LivePublication implementation of CoastSat.
 
 ## Components
 
