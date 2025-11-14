@@ -51,6 +51,8 @@ requirements:
     dockerImageId: coastsat-cwl:latest
   NetworkAccess:
     networkAccess: true
+  # Environment variables are read from host environment via --preserve-environment flag
+  # Tools check for NIWA_TIDE_API_KEY environment variable
   InitialWorkDirRequirement:
     listing:
       - entry: $(inputs.script)

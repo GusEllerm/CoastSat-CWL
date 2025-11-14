@@ -1,0 +1,33 @@
+polygons:
+  class: File
+  path: ../../../CoastSat-minimal/inputs/polygons.geojson
+shorelines:
+  class: File
+  path: ../../../CoastSat-minimal/inputs/shorelines.geojson
+transects_extended:
+  class: File
+  path: ../../../CoastSat-minimal/inputs/transects_extended.geojson
+nz_sites: ["nzd0001"]
+sar_sites: []
+start_date: "2024-01-01"
+end_date: "2024-12-31"
+sat_list: ["L8", "L9"]
+output_dir:
+  class: Directory
+  path: outputs
+sds_slope_module:
+  class: File
+  path: ../../../CoastSat-minimal/scripts/SDS_slope.py
+batch_process_nz_script:
+  class: File
+  path: ../../tools/batch-process-nz/batch_process_nz_wrapper.py
+batch_process_sar_script:
+  class: File
+  path: ../../tools/batch-process-sar/batch_process_sar_wrapper.py
+# Credentials are read from environment variables (.env file)
+# The tools will check for:
+#   - GEE_SERVICE_ACCOUNT
+#   - GEE_PRIVATE_KEY_PATH  
+#   - NIWA_TIDE_API_KEY
+# These should be set in your .env file in the project root
+

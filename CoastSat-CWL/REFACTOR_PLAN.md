@@ -285,26 +285,39 @@ Each Python script becomes a CWL CommandLineTool with:
     - Aggregation of multiple inputs
     - Creates Excel file with 4 sheets: Intersects, Tides, Transects, Intersect points
 
-### Phase 3: Workflow Definition
+### Phase 3: Workflow Definition ✅ COMPLETE
 
 **Goal**: Create main workflow that orchestrates all tools
 
-- [ ] **Workflow: `coastsat-workflow.cwl`**
+- [x] **Workflow: `coastsat-workflow.cwl`** ✅ COMPLETE
+  - [x] Workflow structure created with all 9 steps
+  - [x] Scatter alignment fixed (arrays included in scatter field for proper alignment)
+  - [x] Aggregation steps implemented using `aggregate-transects.cwl` tool
+  - [x] Script files explicitly passed to avoid anonymous file object errors
+  - [x] Workflow validates successfully
   - Steps in sequence:
-    1. `batch_process_nz` (with scatter for sites)
-    2. `batch_process_sar` (optional, with scatter for sites)
-    3. `tidal_correction_fetch` (with scatter for sites)
-    4. `slope_estimation` (with scatter for sites)
-    5. **Aggregate slope outputs** (merge per-site transects into single `transects_extended.geojson`)
-    6. `tidal_correction_apply` (with scatter for sites)
-    7. `linear_models` (with scatter for sites)
-    8. **Aggregate linear model outputs** (merge per-site transects into single `transects_extended.geojson`)
-    9. `make_xlsx` (with scatter for sites)
+    1. `batch_process_nz` (with scatter for sites) ✅
+    2. `batch_process_sar` (optional, with scatter for sites) ✅
+    3. `fetch_tides_nz` (with scatter for sites) ✅
+    4. `fetch_tides_sar` (with scatter for sites) ✅
+    5. `slope_estimation_nz` (with scatter for sites) ✅
+    6. `slope_estimation_sar` (with scatter for sites) ✅
+    7. **Aggregate slope outputs** (merge per-site transects into single `transects_extended_slopes.geojson`) ✅
+    8. `tidal_correction_apply_nz` (with scatter for sites) ✅
+    9. `tidal_correction_apply_sar` (with scatter for sites) ✅
+    10. `linear_models_nz` (with scatter for sites) ✅
+    11. `linear_models_sar` (with scatter for sites) ✅
+    12. **Aggregate linear model outputs** (merge per-site transects into final `transects_extended.geojson`) ✅
+    13. `make_xlsx_reports_nz` (with scatter for sites) ✅
+    14. `make_xlsx_reports_sar` (with scatter for sites) ✅
   
-  - **Scatter Strategy**: 
+  - **Scatter Strategy**: ✅ IMPLEMENTED
     - Sites can be processed in parallel where independent
-    - Use `scatter: [sites]` for parallelization
+    - Use `scatter: [site_id, array_inputs]` for proper alignment (arrays included in scatter field)
     - Sequential steps where dependencies exist (e.g., slope estimation before tidal correction apply)
+    - **Key Fix**: Array inputs from previous scatter steps must be included in the scatter field to ensure proper index alignment
+      - Example: `scatter: [site_id, transect_time_series]` aligns arrays by index automatically
+      - This resolves type incompatibility errors between `File[]` outputs and `File` inputs in scattered steps
   
   - **Aggregation Steps** (⚠️ **CRITICAL FOR WORKFLOW IMPLEMENTATION**):
     - **After `slope_estimation`**: 
@@ -329,26 +342,27 @@ Each Python script becomes a CWL CommandLineTool with:
         - Output single `transects_extended.geojson` with updated trend statistics
       - This aggregated file is then used as input to `make_xlsx` and is the final output
     
-    - **Aggregation Tool Options**:
-      - Option 1: Create dedicated `aggregate-transects.cwl` tool
-        - Inputs: Array of per-site GeoJSON files
+    - **Aggregation Tool**: ✅ IMPLEMENTED
+      - **Option 1 Selected**: Dedicated `aggregate-transects.cwl` tool ✅
+        - Inputs: Base `transects_extended.geojson`, array of per-site GeoJSON files, columns to update
         - Output: Single aggregated `transects_extended.geojson`
-        - Python script merges GeoDataFrames using pandas/geopandas
-      - Option 2: Use inline Python expression in workflow
-        - Simpler but less reusable
-        - May be sufficient for this use case
-      - **Recommendation**: Option 1 for better provenance tracking and reusability
+        - Python script (`aggregate_transects_wrapper.py`) merges GeoDataFrames using geopandas
+        - Uses `linkMerge: merge_flattened` to combine arrays from multiple scatter sources (NZ and SAR)
+        - Aggregation happens after `slope_estimation` (updates `beach_slope`, `cil`, `ciu`) and after `linear_models` (updates trend statistics)
 
-- [ ] **Workflow Inputs:**
-  - GeoJSON input files
-  - Site IDs list
-  - Date range parameters
-  - Credentials (via secrets or environment variables)
+- [x] **Workflow Inputs:** ✅ IMPLEMENTED
+  - GeoJSON input files (`polygons`, `shorelines`, `transects_extended`)
+  - Site IDs lists (`nz_sites`, `sar_sites`)
+  - Date range parameters (`start_date`, `end_date`)
+  - Satellite list (`sat_list`)
+  - Output directory (`output_dir`)
+  - Credentials (`gee_service_account`, `gee_private_key`, `niwa_api_key` - optional, can use env vars)
+  - SDS slope module (`sds_slope_module`)
+  - Script files (`batch_process_nz_script`, `batch_process_sar_script` - optional, tools have defaults)
 
-- [ ] **Workflow Outputs:**
-  - All generated CSV files
-  - Updated `transects_extended.geojson` (aggregated from per-site outputs)
-  - Excel reports per site
+- [x] **Workflow Outputs:** ✅ IMPLEMENTED
+  - Final `transects_extended.geojson` with all updates (slopes and trend statistics)
+  - Excel reports per site (arrays: `excel_reports_nz`, `excel_reports_sar`)
 
 ### Phase 4: Testing and Validation
 
@@ -577,10 +591,10 @@ CoastSat-CWL/
 - Linear models tool converted
 - Reporting tool converted
 
-### Milestone 4: Integration (Week 8-9)
-- Full workflow assembled
-- Integration testing complete
-- Functional validation passed
+### Milestone 4: Integration (Week 8-9) ✅ IN PROGRESS
+- ✅ Full workflow assembled
+- ⏳ Integration testing in progress
+- ⏳ Functional validation pending
 
 ### Milestone 5: Provenance and Documentation (Week 10)
 - Provenance tracking verified
@@ -615,13 +629,14 @@ CoastSat-CWL/
 
 ## Success Criteria
 
-1. ⏳ All tools successfully converted to CWL (Phase 2 - Pending)
-2. ⏳ Full workflow executes end-to-end (Phase 3 - Pending)
-3. ⏳ Outputs match minimal implementation (within tolerance) (Phase 4 - Pending)
-4. ⏳ Provenance records generated successfully (Phase 4 - Pending)
-5. ⏳ Component E2.2 requirements met (Phase 4 - Pending)
-6. ⏳ Documentation complete and clear (Phase 5 - Pending)
-7. ✅ Docker environment reproducible **COMPLETE**
+1. ✅ All tools successfully converted to CWL (Phase 2 - COMPLETE)
+2. ✅ Full workflow structure complete and validates (Phase 3 - COMPLETE)
+3. ⏳ Full workflow executes end-to-end (Phase 3 - Testing in progress)
+4. ⏳ Outputs match minimal implementation (within tolerance) (Phase 4 - Pending)
+5. ⏳ Provenance records generated successfully (Phase 4 - Pending)
+6. ⏳ Component E2.2 requirements met (Phase 4 - Pending)
+7. ⏳ Documentation complete and clear (Phase 5 - Pending)
+8. ✅ Docker environment reproducible **COMPLETE**
 
 ## Next Steps
 

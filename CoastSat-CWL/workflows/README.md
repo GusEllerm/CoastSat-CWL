@@ -1,38 +1,55 @@
-# CWL Workflows
+# CoastSat CWL Workflows
 
 This directory contains CWL workflow definitions that orchestrate the CoastSat processing pipeline.
 
-## Main Workflow
+## Workflows
 
-- `coastsat-workflow.cwl` - Full end-to-end workflow for all sites
-- `coastsat-workflow-test.cwl` - Test version with limited date range and sites
+### `coastsat-workflow.cwl`
 
-## Workflow Structure
+The main workflow that orchestrates all CoastSat processing steps:
 
-The main workflow orchestrates the following steps:
+1. **Batch Process NZ Sites** (parallel scatter)
+2. **Batch Process SAR Sites** (parallel scatter, optional)
+3. **Fetch Tides** (parallel scatter for NZ and SAR sites separately)
+4. **Slope Estimation** (parallel scatter for NZ and SAR sites separately)
+5. **Aggregate Slope Outputs** (merge per-site transects into single file)
+6. **Apply Tidal Correction** (parallel scatter for NZ and SAR sites separately)
+7. **Linear Models** (parallel scatter for NZ and SAR sites separately)
+8. **Aggregate Linear Model Outputs** (merge per-site transects into single file)
+9. **Generate Excel Reports** (parallel scatter for NZ and SAR sites separately)
 
-1. Batch processing (NZ and SAR sites)
-2. Tidal correction (fetch)
-3. Slope estimation
-4. Tidal correction (apply)
-5. Linear models
-6. Report generation
+**Note**: The workflow is currently being developed. Type alignment issues with scatter steps need to be resolved.
+
+## Workflow Inputs
+
+- `polygons`: GeoJSON file with polygon definitions
+- `shorelines`: GeoJSON file with reference shoreline definitions
+- `transects_extended`: GeoJSON file with transect definitions
+- `nz_sites`: Array of NZ site IDs (e.g., `['nzd0001', 'nzd0002']`)
+- `sar_sites`: Array of SAR site IDs (e.g., `['sar0001']`)
+- `output_dir`: Output directory for all outputs
+- `start_date`: Start date for image download (YYYY-MM-DD)
+- `end_date`: End date for image download (YYYY-MM-DD)
+- `sat_list`: Array of satellite names (e.g., `['L8', 'L9']`)
+- `gee_service_account`: GEE service account email (optional)
+- `gee_private_key`: GEE private key file (optional)
+- `niwa_api_key`: NIWA API key (optional)
+- `sds_slope_module`: SDS_slope.py module file
+
+## Workflow Outputs
+
+- `final_transects_extended`: Aggregated transects GeoJSON with all updates
+- `excel_reports`: Excel report files for NZ sites
+- `excel_reports_sar`: Excel report files for SAR sites
 
 ## Usage
 
 ```bash
-cwltool workflows/coastsat-workflow.cwl workflow-input.yml
+cwltool workflows/coastsat-workflow.cwl workflow-inputs.yml
 ```
 
-## Input Format
+## Current Status
 
-See `../examples/workflow-input.yml` for an example input file.
+⚠️ **Work in Progress**: The workflow has validation errors related to type alignment in scatter steps. These need to be resolved before execution.
 
-## Provenance
-
-Run with CWLProv to generate provenance records:
-
-```bash
-cwlprov run workflows/coastsat-workflow.cwl workflow-input.yml
-```
-
+The main challenge is ensuring proper alignment between array outputs from one scatter step and inputs to the next scatter step. This requires careful ordering of scatter fields.

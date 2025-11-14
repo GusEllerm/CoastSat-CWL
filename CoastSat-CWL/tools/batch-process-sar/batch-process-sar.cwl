@@ -90,6 +90,8 @@ requirements:
     dockerImageId: coastsat-cwl:latest
   NetworkAccess:
     networkAccess: true
+  # Environment variables are read from host environment via --preserve-environment flag
+  # Tools check for GEE_SERVICE_ACCOUNT and GEE_PRIVATE_KEY_PATH environment variables
   InitialWorkDirRequirement:
     listing:
       - entry: $(inputs.script)
