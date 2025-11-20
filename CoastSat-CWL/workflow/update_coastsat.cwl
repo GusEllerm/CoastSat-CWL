@@ -29,6 +29,13 @@ requirements:
   - class: MultipleInputFeatureRequirement
 
 inputs:
+  # Slope estimation extension for the CoastSat tool.
+  sds_slope:
+    type: File
+    loadContents: true
+    default:
+      class: File
+      location: /Users/eller/Projects/CoastSat-CWL/CoastSat-CWL/tools/slope_estimation_site/SDS_slope.py
 
   # Data inputs
   polygons_geojson:
@@ -201,6 +208,7 @@ steps:
       site_id: prepare_sites/nzd_list
       site_dir: fetch_nzd_tides/site_dir
       transects_extended_geojson: transects_extended_geojson
+      sds_slope: sds_slope
     out: [site_slopes]
 
   # Step 7b: merge slopes into a single transects_extended.geojson

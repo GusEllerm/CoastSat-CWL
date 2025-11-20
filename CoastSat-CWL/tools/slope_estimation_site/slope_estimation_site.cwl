@@ -16,7 +16,7 @@ requirements:
           import numpy as np
           import pytz
           from datetime import datetime
-          import SDS_slope  # from InitialWorkDir listing below
+          import SDS_slope  # provided as SDS_slope.py in this workdir
 
           def main(argv=None):
               p = argparse.ArgumentParser()
@@ -34,7 +34,7 @@ requirements:
               if new_transects.empty:
                   # Nothing to do, write empty JSON
                   out = {"site_id": site_id, "slopes": {}}
-                  with open("slopes_%s.json" % site_id, "w") as f:
+                  with open(f"slopes_{site_id}.json", "w") as f:
                       json.dump(out, f)
                   return 0
 
@@ -51,8 +51,7 @@ requirements:
               df.index = df.index.round("10min")
               assert all(df.index == tides.index)
 
-                            # Slope settings (lifted from notebook)
-              days_in_year = 365.2425
+              # Slope settings (as per notebook)
               seconds_in_day = 24 * 3600
               settings_slope = {
                   "slope_min": 0.01,
@@ -104,7 +103,6 @@ requirements:
                   slope_est[key] = float(s)
                   cis[key] = [float(ci[0]), float(ci[1])]
 
-
               result = {
                   "site_id": site_id,
                   "slopes": {
@@ -113,7 +111,7 @@ requirements:
                   },
               }
 
-              with open("slopes_%s.json" % site_id, "w") as f:
+              with open(f"slopes_{site_id}.json", "w") as f:
                   json.dump(result, f, indent=2)
 
               return 0
@@ -121,9 +119,9 @@ requirements:
           if __name__ == "__main__":
               raise SystemExit(main())
 
-      - class: File
-        location: SDS_slope.py
-
+      # Here we materialise SDS_slope.py from the file input contents
+      - entryname: SDS_slope.py
+        entry: $(inputs.sds_slope.contents)
 
 baseCommand: [python3, slope_estimation_site.py]
 
@@ -142,6 +140,13 @@ inputs:
     type: File
     inputBinding:
       prefix: --transects-geojson
+
+  sds_slope:
+    type: File
+    loadContents: true
+    default:
+      class: File
+      location: SDS_slope.py
 
 outputs:
   site_slopes:

@@ -234,16 +234,34 @@ requirements:
 
               df = process_site(args.site_id, poly, shorelines, transects_gdf, existing_df, min_date)
               if df is None:
-                  print(f"No new shorelines for {args.site_id}; nothing to write.")
-                  return 0
+                  # Case 1: we have existing data but nothing new – reuse the existing time series
+                  if existing_df is not None and not existing_df.empty:
+                      print(
+                          f"No new shorelines for {args.site_id}; "
+                          f"reusing existing transect_time_series.csv from input."
+                      )
+                      df_to_write = existing_df
+                  else:
+                      # Case 2: no existing data and no new data – write an empty placeholder
+                      # so CWL can still glob a file and downstream tools can handle 'no data'.
+                      print(
+                          f"No shorelines and no existing time series for {args.site_id}; "
+                          f"writing an empty placeholder transect_time_series.csv"
+                      )
+                      df_to_write = pd.DataFrame(columns=["dates", "satname"])
+              else:
+                  # Normal case: we have a merged (existing + new) DataFrame
+                  print(f"[batch_process_sar] New data found for site {args.site_id}, writing to file.")
+                  df_to_write = df
 
               # Write output: ./<site-id>/transect_time_series.csv
               site_dir = os.path.join(os.getcwd(), args.site_id)
               os.makedirs(site_dir, exist_ok=True)
               out_csv = os.path.join(site_dir, "transect_time_series.csv")
-              df.to_csv(out_csv, index=False, float_format="%.2f")
+              df_to_write.to_csv(out_csv, index=False, float_format="%.2f")
               print(f"{args.site_id} is done. Time-series saved as: {out_csv}")
               return 0
+
 
 
           if __name__ == "__main__":
