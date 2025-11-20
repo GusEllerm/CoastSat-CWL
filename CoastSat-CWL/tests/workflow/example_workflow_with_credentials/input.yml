@@ -1,0 +1,16 @@
+polygons_geojson:
+  class: File
+  path: ../../../data/input/small_polygons.geojson
+load_gee_script:
+  class: File
+  path: ../../../tools/load_gee_credentials/load_gee_credentials.py
+load_env_script:
+  class: File
+  path: ../../../tools/load_env_credentials/load_env_credentials.py
+private_key_file:
+  class: File
+  path: ../../../../.private-key.json
+env_file:
+  class: File
+  path: ../../../../.env
+

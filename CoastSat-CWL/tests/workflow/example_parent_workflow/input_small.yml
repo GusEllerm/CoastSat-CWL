@@ -1,0 +1,9 @@
+polygons_geojson:
+  class: File
+  path: ../../../data/input/small_polygons.geojson
+group_by_prefix_script:
+  class: File
+  path: ../../../tools/group_by_prefix/group_by_prefix.py
+read_array_script:
+  class: File
+  path: ../../../tools/group_by_prefix/read_grouped_ids_array.py

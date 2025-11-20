@@ -1,0 +1,30 @@
+
+services:
+  coastsat-validation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coastsat-validation
+    volumes:
+      # Mount the workflow directory (read-write for outputs)
+      - ./workflow:/app
+      # Mount baseline data (read-only)
+      - ./baseline:/app/baseline:ro
+      # Mount validation data (read-only, for comparison)
+      - ./validation:/app/validation:ro
+      # Mount GEE credentials if they exist
+      - ./.private-key.json:/app/.private-key.json:ro
+      # Mount .env file if it exists (for NIWA API key)
+      - ./.env:/app/.env:ro
+      # Mount config.json for comparison script
+      - ./config.json:/app/config.json:ro
+    environment:
+      - PYTHONPATH=/app
+      # NIWA API key for tidal corrections (set from .env file if present)
+      - NIWA_API_KEY=${NIWA_API_KEY:-}
+    # Keep container running for interactive use
+    stdin_open: true
+    tty: true
+    # Run in foreground
+    command: /bin/bash
+

@@ -1,0 +1,307 @@
+cwlVersion: v1.2
+class: CommandLineTool
+
+$namespaces:
+  cwltool: "http://commonwl.org/cwltool#"
+
+label: Process single SAR site with CoastSat
+
+doc: |
+  Runs the batch_process_sar logic for a single site.
+  This tool is intended to be scattered over a list of SAR site IDs.
+  It:
+    - reads polygons, shorelines and transects GeoJSON files
+    - reads any existing transect_time_series.csv for that site
+    - downloads and processes new imagery with CoastSat
+    - writes ./<site-id>/transect_time_series.csv as output
+
+hints:
+  cwltool:Secrets:
+    secrets:
+      - gee_key_json
+
+requirements:
+  InlineJavascriptRequirement: {}
+  InitialWorkDirRequirement:
+    listing:
+      - entryname: process_sar_site.py
+        entry: |
+          #!/usr/bin/env python3
+          import os
+          import sys
+          import argparse
+          import warnings
+          import tempfile
+          import time
+          from datetime import timedelta
+
+          import numpy as np
+          import pandas as pd
+          import geopandas as gpd
+          import ee
+          from shapely.ops import split
+          from shapely import line_merge
+
+          from coastsat import SDS_download, SDS_shoreline, SDS_tools, SDS_transects
+
+          warnings.filterwarnings("ignore")
+
+          CRS = 3003  # Sardinia CRS
+
+          def init_gee(gee_key_json: str, service_account: str) -> str:
+              """
+              Initialise Earth Engine using a service-account JSON string.
+              Returns the path to the temporary key file.
+              """
+              fd, key_path = tempfile.mkstemp(prefix="gee-key-", suffix=".json")
+              os.close(fd)
+              with open(key_path, "w") as f:
+                  f.write(gee_key_json)
+              credentials = ee.ServiceAccountCredentials(service_account, key_path)
+              ee.Initialize(credentials)
+              return key_path
+
+
+          def process_site(
+              sitename: str,
+              poly: gpd.GeoDataFrame,
+              shorelines: gpd.GeoDataFrame,
+              transects_gdf: gpd.GeoDataFrame,
+              existing_df: pd.DataFrame,
+              min_date: str,
+          ):
+              """
+              Run the CoastSat shoreline workflow for a single SAR site.
+              Returns a concatenated DataFrame (existing + new), or None if no new results.
+              """
+              print(f"Now processing {sitename}")
+
+              inputs = {
+                  "polygon": list(poly.geometry[sitename].exterior.coords),
+                  "dates": [min_date, "2030-12-30"],  # all available imagery
+                  "sat_list": ["L5", "L7", "L8", "L9"],
+                  "sitename": sitename,
+                  # put outputs under ./<sitename> relative to CWL step workdir
+                  "filepath": os.path.abspath("."),
+                  "landsat_collection": "C02",
+              }
+
+              metadata = SDS_download.retrieve_images(inputs)
+
+              # shoreline extraction settings (from original SAR script)
+              settings = {
+                  "cloud_thresh": 0.1,
+                  "dist_clouds": 300,
+                  "output_epsg": CRS,
+                  "check_detection": False,
+                  "adjust_detection": False,
+                  "save_figure": True,
+                  "min_beach_area": 1000,
+                  "min_length_sl": 500,
+                  "cloud_mask_issue": False,
+                  "sand_color": "default",
+                  "pan_off": False,
+                  "s2cloudless_prob": 40,
+                  "inputs": inputs,
+              }
+
+              # Transects for this site
+              transects_at_site = transects_gdf[transects_gdf.site_id == sitename]
+              transects = {
+                  transect_id: np.array(transects_at_site.geometry[transect_id].coords)
+                  for transect_id in transects_at_site.index
+              }
+
+              # Reference shoreline (no flip in SAR)
+              ref_sl = np.array(
+                  line_merge(
+                      split(shorelines.geometry[sitename], transects_at_site.unary_union)
+                  ).coords
+              )
+              settings["max_dist_ref"] = 300
+              settings["reference_shoreline"] = ref_sl
+
+              output = SDS_shoreline.extract_shorelines(metadata, settings)
+              print(f"Have {len(output['shorelines'])} new shorelines for {sitename}")
+              if not output["shorelines"]:
+                  return None
+
+              # NOTE: SAR script does NOT flip shorelines
+              # output['shorelines'] = [np.flip(s) for s in output['shorelines']]
+
+              # QC filters (15 m, as in original SAR script)
+              output = SDS_tools.remove_duplicates(output)
+              output = SDS_tools.remove_inaccurate_georef(output, 15)
+
+              settings_transects = {
+                  "along_dist": 25,
+                  "min_points": 3,
+                  "max_std": 15,
+                  "max_range": 30,
+                  "min_chainage": -100,
+                  "multiple_inter": "auto",
+                  "auto_prc": 0.1,
+              }
+
+              cross_distance = SDS_transects.compute_intersection_QC(
+                  output, transects, settings_transects
+              )
+
+              out_dict = {}
+              out_dict["dates"] = output["dates"]
+              out_dict["satname"] = output["satname"]
+              for key in transects.keys():
+                  out_dict[key] = cross_distance[key]
+
+              new_results = pd.DataFrame(out_dict)
+              if new_results.empty:
+                  return None
+
+              if existing_df is None or existing_df.empty:
+                  df = new_results
+              else:
+                  df = pd.concat([existing_df, new_results], ignore_index=True)
+
+              df.sort_values("dates", inplace=True)
+              return df
+
+
+          def main(argv=None) -> int:
+              parser = argparse.ArgumentParser(
+                  description="Process a single SAR site with CoastSat (CWL-friendly)"
+              )
+              parser.add_argument("--site-id", required=True, help="Site ID, e.g. sar0001")
+              parser.add_argument("--polygons-geojson", required=True, help="Polygons GeoJSON path")
+              parser.add_argument("--shoreline-geojson", required=True, help="Shorelines GeoJSON path")
+              parser.add_argument("--transects-geojson", required=True, help="Transects GeoJSON path")
+              parser.add_argument(
+                  "--existing-ts-root",
+                  required=True,
+                  help="Directory containing existing per-site transect_time_series.csv (subdir per site)",
+              )
+              parser.add_argument(
+                  "--gee-key-json",
+                  required=True,
+                  help="GEE service-account JSON (string, marked as secret in CWL)",
+              )
+              parser.add_argument(
+                  "--service-account-email",
+                  required=False,
+                  default=os.environ.get(
+                      "GEE_SERVICE_ACCOUNT",
+                      "service-account@iron-dynamics-294100.iam.gserviceaccount.com",
+                  ),
+              )
+
+              args = parser.parse_args(argv)
+
+              start = time.time()
+              key_path = init_gee(args.gee_key_json, args.service_account_email)
+              print(f"{time.time() - start:.1f}s: Logged into EE as {args.service_account_email}")
+
+              # Load data for this site only
+              poly = gpd.read_file(args.polygons_geojson)
+              poly = poly[poly.id == args.site_id]
+              if poly.empty:
+                  print(f"No polygon found for site {args.site_id}", file=sys.stderr)
+                  return 1
+              poly.set_index("id", inplace=True)
+
+              shorelines = gpd.read_file(args.shoreline_geojson)
+              shorelines = shorelines[shorelines.id == args.site_id].to_crs(CRS)
+              if shorelines.empty:
+                  print(f"No shoreline found for site {args.site_id}", file=sys.stderr)
+                  return 1
+              shorelines.set_index("id", inplace=True)
+
+              transects_gdf = (
+                  gpd.read_file(args.transects_geojson)
+                  .to_crs(CRS)
+                  .drop_duplicates(subset="id")
+              )
+              transects_gdf.set_index("id", inplace=True)
+
+              # Existing time-series, if any
+              existing_root = args.existing_ts_root
+              existing_csv = os.path.join(existing_root, args.site_id, "transect_time_series.csv")
+              try:
+                  existing_df = pd.read_csv(existing_csv)
+                  existing_df.dates = pd.to_datetime(existing_df.dates)
+                  min_date = str(existing_df.dates.max().date() + timedelta(days=1))
+              except FileNotFoundError:
+                  existing_df = pd.DataFrame()
+                  min_date = "1900-01-01"  # SAR default from original script
+
+              df = process_site(args.site_id, poly, shorelines, transects_gdf, existing_df, min_date)
+              if df is None:
+                  print(f"No new shorelines for {args.site_id}; nothing to write.")
+                  return 0
+
+              # Write output: ./<site-id>/transect_time_series.csv
+              site_dir = os.path.join(os.getcwd(), args.site_id)
+              os.makedirs(site_dir, exist_ok=True)
+              out_csv = os.path.join(site_dir, "transect_time_series.csv")
+              df.to_csv(out_csv, index=False, float_format="%.2f")
+              print(f"{args.site_id} is done. Time-series saved as: {out_csv}")
+              return 0
+
+
+          if __name__ == "__main__":
+              raise SystemExit(main())
+
+
+baseCommand: [python3, process_sar_site.py]
+
+inputs:
+  site_id:
+    type: string
+    doc: Site ID, e.g. sar0001
+    inputBinding:
+      prefix: --site-id
+
+  polygons_geojson:
+    type: File
+    inputBinding:
+      prefix: --polygons-geojson
+
+  shoreline_geojson:
+    type: File
+    inputBinding:
+      prefix: --shoreline-geojson
+
+  transects_extended_geojson:
+    type: File
+    inputBinding:
+      prefix: --transects-geojson
+
+  transect_time_series_per_site:
+    type: Directory
+    doc: Directory containing existing per-site transect_time_series.csv
+    inputBinding:
+      prefix: --existing-ts-root
+
+  gee_key_json:
+    type: string
+    inputBinding:
+      prefix: --gee-key-json
+
+  service_account_email:
+    type: string?
+    doc: >
+      Optional GEE service account email. If not set, defaults to the hard-coded
+      service account in the script or the GEE_SERVICE_ACCOUNT env var.
+    inputBinding:
+      prefix: --service-account-email
+
+stdout: process_site.log
+
+outputs:
+  site_dir:
+    type: Directory
+    outputBinding:
+      glob: $(inputs.site_id)
+
+  transect_time_series:
+    type: File
+    outputBinding:
+      glob: $(inputs.site_id + "/transect_time_series.csv")

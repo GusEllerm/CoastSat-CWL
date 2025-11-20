@@ -1,0 +1,3 @@
+polygons_geojson:
+  class: File
+  path: ../../../data/input/small_polygons.geojson

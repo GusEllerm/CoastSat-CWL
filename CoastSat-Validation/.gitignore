@@ -1,0 +1,43 @@
+# Log files
+*.log
+workflow_execution*.log
+workflow_incremental_*.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Docker
+.dockerignore
+
+# Environment
+.env
+.private-key.json
+
+# Workflow data (large files, regenerated)
+workflow/data/
+workflow/*.geojson
+workflow/*.xlsx
+workflow/MAX_DATE.txt
+workflow/update_validation.sh
+workflow/check_requirements.sh
+
+# Baseline and validation data (extracted from Git, can be regenerated)
+baseline/
+validation/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store

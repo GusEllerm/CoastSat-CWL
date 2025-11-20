@@ -1,0 +1,7 @@
+coastsat_package
+geopandas
+scipy
+matplotlib_venn
+numpy<2
+python-dotenv
+folium
