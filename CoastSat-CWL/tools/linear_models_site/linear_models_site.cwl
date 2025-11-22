@@ -10,6 +10,7 @@ requirements:
         entry: |
           #!/usr/bin/env python3
           import argparse
+          import shutil
           import json
           import os
 
@@ -154,6 +155,25 @@ requirements:
               with open(f"linear_{site_id}.json", "w") as fp:
                   json.dump(result, fp, indent=2)
 
+              out_site_dir = os.path.join(os.getcwd(), site_id)
+              os.makedirs(out_site_dir, exist_ok=True)
+
+              # Always copy the base time-series file we actually used (f)
+              if os.path.exists(f):
+                  shutil.copy2(
+                      f,
+                      os.path.join(out_site_dir, os.path.basename(f)),
+                  )
+
+              # For SAR/BER, we may also have despiked/smoothed variants
+              for suffix in ("_despiked.csv", "_smoothed.csv"):
+                  candidate = f.replace(".csv", suffix)
+                  if os.path.exists(candidate):
+                      shutil.copy2(
+                          candidate,
+                          os.path.join(out_site_dir, os.path.basename(candidate)),
+                      )
+
               return 0
 
 
@@ -178,3 +198,8 @@ outputs:
     type: File
     outputBinding:
       glob: $( "linear_" + inputs.site_id + ".json" )
+
+  site_dir:
+    type: Directory
+    outputBinding:
+      glob: $(inputs.site_id)
