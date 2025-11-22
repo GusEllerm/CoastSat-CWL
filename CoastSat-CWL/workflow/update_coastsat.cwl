@@ -35,7 +35,7 @@ inputs:
     loadContents: true
     default:
       class: File
-      location: /Users/eller/Projects/CoastSat-CWL/CoastSat-CWL/tools/slope_estimation_site/SDS_slope.py
+      location: ../tools/slope_estimation_site/SDS_slope.py
 
   # Data inputs
   polygons_geojson:
@@ -163,18 +163,8 @@ steps:
     doc: |
       Processes each SAR site ID in parallel using the batch_process_sar tool.
       Each scattered run produces a per-site directory containing transect_time_series.csv.
-  
-  # Step 5: Collect all results
-  # This step waits for both process_nzd_sites and process_sar_sites to complete
-  # before executing (automatic dependency resolution)
-  collect_all:
-    run: ../tools/collect_results/collect_results.cwl
-    in:
-      nzd_results: process_nzd_sites/site_dir
-      sar_results: process_sar_sites/site_dir  # once SAR also returns dirs
-    out: [results]
 
-  # Step 6: Fetch NZD tides
+  # Step 5: Fetch NZD tides
   # This step fetches tides.csv for each NZD site using the NIWA API.
   fetch_nzd_tides:
     run: ../tools/fetch_tides_nz_site/fetch_tides_nz_site.cwl
@@ -192,7 +182,7 @@ steps:
       Produces per-site directories containing transect_time_series.csv and tides.csv.
 
 
-  # Step 7: per-site slope estimation (scattered)
+  # Step 6: per-site slope estimation (scattered)
   slope_estimation_site:
     run: ../tools/slope_estimation_site/slope_estimation_site.cwl
     scatter: [site_id, site_dir]
@@ -204,7 +194,7 @@ steps:
       sds_slope: sds_slope
     out: [site_slopes]
 
-  # Step 8: merge slopes into a single transects_extended.geojson
+  # Step 7: merge slopes into a single transects_extended.geojson
   merge_slopes:
     run: ../tools/merge_slopes/merge_slopes.cwl
     in:
@@ -212,7 +202,7 @@ steps:
       site_slopes: slope_estimation_site/site_slopes
     out: [transects_extended_geojson_out]
 
-  # Step 9: Apply tidal correction to NZD sites
+  # Step 8: Apply tidal correction to NZD sites
   apply_nzd_tidal_correction:
     run: ../tools/tidal_correction_nz/tidal_correction_nz.cwl
     scatter: [site_id, site_dir_in]
@@ -224,7 +214,7 @@ steps:
     out: [site_dir, transect_time_series_tidally_corrected]
 
 
-  # Step 10: Linear models per NZD site (parallel)
+  # Step 9: Linear models per NZD site (parallel)
   linear_models_nzd:
     run: ../tools/linear_models_site/linear_models_site.cwl
     scatter: [site_id, site_dir]
@@ -234,7 +224,7 @@ steps:
       site_dir: apply_nzd_tidal_correction/site_dir
     out: [site_models]
 
-  # Step 11: Linear models per SAR site (parallel)
+  # Step 10: Linear models per SAR site (parallel)
   linear_models_sar:
     run: ../tools/linear_models_site/linear_models_site.cwl
     scatter: [site_id, site_dir]
@@ -244,7 +234,7 @@ steps:
       site_dir: process_sar_sites/site_dir
     out: [site_models, site_dir]
 
-  # Step 12: Trim SAR site directories to remove imagery
+  # Step 11: Trim SAR site directories to remove imagery
   clean_sar_sites:
     run: ../tools/clean_sar_site_dir/clean_sar_site_dir.cwl
     scatter: [site_id, src_dir]
@@ -254,7 +244,7 @@ steps:
       src_dir: linear_models_sar/site_dir
     out: [site_dir]
 
-  # Step 13: Merge linear results into transects_extended.geojson
+  # Step 12: Merge linear results into transects_extended.geojson
   merge_linear_models:
     run: ../tools/merge_linear_models/merge_linear_models.cwl
     in:
@@ -266,15 +256,15 @@ steps:
         linkMerge: merge_flattened
     out: [transects_extended_geojson_out]
 
-  # Steps 14 and 15 are optional, and create summarisations of NZ sites. 
-  # Step 14: global transects summary
+  # Steps 13 and 14 are optional, and create summarisations of NZ sites. 
+  # Step 13: global transects summary
   make_transects_summary:
     run: ../tools/make_transects_summary/make_transects_summary.cwl
     in:
       transects_extended_geojson: merge_linear_models/transects_extended_geojson_out
     out: [transects_xlsx]
 
-  # Step 15: Excel per NZD site (parallel)
+  # Step 14: Excel per NZD site (parallel)
   make_xlsx_nzd:
     run: ../tools/make_xlsx_site/make_xlsx_site.cwl
     scatter: [site_id, site_dir]

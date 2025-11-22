@@ -1,0 +1,26 @@
+name: coastsat-cwl
+channels:
+  - conda-forge
+  - fbriol   
+  - defaults
+dependencies:
+  - proj
+  - proj-data
+  - python=3.11
+  - pip
+  - pyfes
+  - pytz
+  - shapely
+  - scikit-learn
+  - scipy
+  - rasterio
+  - cwltool
+  - numpy
+  - geopandas
+  - astropy
+  - matplotlib
+  - gdal
+  - openpyxl
+  - nodejs
+  - pip:
+    - coastsat-package
