@@ -13,6 +13,10 @@ CoastSat-CWL converts the original Python-based CoastSat processing pipeline int
 - **Tidal corrections** for New Zealand sites using the NIWA Tide API
 - **Statistical analysis** including beach slope estimation and linear trend modeling
 
+## Workflow Diagram
+
+![CoastSat-CWL Workflow Diagram](workflow_diagram.svg)
+
 ## Key Components
 
 - **`CoastSat-CWL/`**: Main CWL workflow and tool definitions
