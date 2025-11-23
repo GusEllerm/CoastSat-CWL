@@ -25,23 +25,34 @@ CoastSat-CWL converts the original Python-based CoastSat processing pipeline int
   - `tools/`: Individual CWL tool definitions for each processing step
   - `Dockerfile`: Container image with CoastSat dependencies
   - `environment.yml`: Conda environment specification
-- **`results/`**: Execution directory with scripts and input files
-
-  - `run_cwl.sh`: Script to execute the workflow
-  - `input.yml`: Workflow input parameters (create this before running)
-  - See `results/README.md` for detailed usage instructions
+  - `data/`: Input and output data directories
+  - `tests/`: Test input files and examples (see `tests/README.md` for usage)
 - **`workflow_diagram.svg`**: Visual diagram of the workflow structure and data flow
 
 ## Quick Start
 
-1. Create an `input.yml` file in the `results/` directory (see `results/README.md` for details)
-2. Run the workflow:
+1. Create an `input.yml` file with your workflow parameters (see `CoastSat-CWL/tests/workflow/` for example input files)
+2. Run the workflow using `cwltool`:
    ```bash
-   cd results
-   ./run_cwl.sh
+   cwltool --enable-ext --parallel \
+     CoastSat-CWL/workflow/update_coastsat.cwl \
+     input.yml
+   ```
+
+   Or using Docker:
+   ```bash
+   docker run --rm \
+     -v $(pwd):/workspace \
+     -w /workspace \
+     gusellerm/coastsat-cwl:latest \
+     cwltool --enable-ext --parallel \
+       CoastSat-CWL/workflow/update_coastsat.cwl \
+       input.yml
    ```
 
 The workflow processes satellite imagery, extracts shorelines, applies corrections, and generates time series data and statistical summaries.
+
+For detailed examples, see `CoastSat-CWL/tests/README.md`.
 
 ## Workflow Features
 
@@ -71,8 +82,8 @@ docker run --rm \
   -v /path/to/cfg:/cfg \
   -v /path/to/out:/out \
   gusellerm/coastsat-cwl:latest \
-  bash -lc 'cwltool --no-container --outdir /out \
-    /workflow/workflow/update_coastsat.cwl \
+  bash -lc 'cwltool --enable-ext --parallel --outdir /out \
+    /CoastSat-CWL/workflow/update_coastsat.cwl \
     /cfg/input.yml'
 ```
 
@@ -80,9 +91,10 @@ Your input YAML should reference paths within `/data` (e.g., `/data/input/polygo
 
 ## Requirements
 
-- Docker (for containerized execution)
-- Google Earth Engine service account credentials
-- NIWA Tide API key (for New Zealand sites)
-- Network access to Google Earth Engine and NIWA API
+- **cwltool**: CWL workflow execution engine (install via `pip install cwltool` or use Docker)
+- **Docker** (optional, for containerized execution)
+- **Google Earth Engine service account credentials**: See `CoastSat-CWL/tools/CREDENTIALS.md` for details
+- **NIWA Tide API key** (for New Zealand sites): See `CoastSat-CWL/tools/CREDENTIALS.md` for details
+- **Network access** to Google Earth Engine and NIWA API
 
 See `CoastSat-CWL/Dockerfile` and `CoastSat-CWL/environment.yml` for dependency details.

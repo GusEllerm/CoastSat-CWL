@@ -27,6 +27,25 @@ RUN echo "conda activate coastsat-cwl" >> ~/.bashrc
 ENV PATH=/opt/conda/envs/coastsat-cwl/bin:$PATH
 ENV PROJ_LIB=/opt/conda/envs/coastsat-cwl/share/proj
 
+SHELL ["bash", "-lc"]
+
+# Activate env by default
+RUN echo "conda activate coastsat-cwl" >> ~/.bashrc
+
+# Point everything at the env's data dirs
+ENV CONDA_ENV=coastsat-cwl
+ENV CONDA_PREFIX=/opt/conda/envs/${CONDA_ENV}
+ENV PATH=${CONDA_PREFIX}/bin:$PATH
+ENV PROJ_LIB=${CONDA_PREFIX}/share/proj
+ENV PROJ_DATA=${CONDA_PREFIX}/share/proj
+ENV GDAL_DATA=${CONDA_PREFIX}/share/gdal
+
+# Symlinks for libs that look in /opt/conda/share/...
+RUN mkdir -p /opt/conda/share && \
+    ln -s ${PROJ_LIB} /opt/conda/share/proj || true && \
+    ln -s ${GDAL_DATA} /opt/conda/share/gdal || true
+
+
 # Copy workflow code
 COPY . /workflow
 WORKDIR /workflow
