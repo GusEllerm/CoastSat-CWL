@@ -29,6 +29,15 @@ requirements:
           #!/usr/bin/env python3
           import os
           import sys
+          
+          # Ensure PROJ environment variables are set before importing geospatial libraries
+          # This prevents GDAL/PROJ initialization errors
+          conda_prefix = os.environ.get('CONDA_PREFIX', '/opt/conda/envs/coastsat-cwl')
+          proj_data = os.path.join(conda_prefix, 'share', 'proj')
+          if os.path.exists(proj_data):
+              os.environ.setdefault('PROJ_DATA', proj_data)
+              os.environ.setdefault('PROJ_LIB', proj_data)
+          
           import argparse
           import warnings
           import tempfile

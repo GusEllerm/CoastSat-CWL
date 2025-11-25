@@ -68,7 +68,7 @@ outputs:
   # Primary results
   nzd_results:
       type: Directory[]
-      outputSource: make_xlsx_nzd/site_dir
+      outputSource: make_xlsx_nzd/site_dir_out
       doc: |
         Per-site directories each containing transect_time_series.csv, tides.csv, and transect_time_series_tidally_corrected.csv.
   sar_results:
@@ -105,6 +105,7 @@ outputs:
   #   outputSource: process_nzd_sites/site_dir
   #   doc: |
   #     Per-site directories each containing the satellite imagery for the site.
+  
 steps:
 
   # Step 1: Load credentials
@@ -232,7 +233,7 @@ steps:
     in:
       site_id: prepare_sites/sar_list
       site_dir: process_sar_sites/site_dir
-    out: [site_models, site_dir]
+    out: [site_models, site_dir_out]
 
   # Step 11: Trim SAR site directories to remove imagery
   clean_sar_sites:
@@ -241,7 +242,7 @@ steps:
     scatterMethod: dotproduct
     in:
       site_id: prepare_sites/sar_list
-      src_dir: linear_models_sar/site_dir
+      src_dir: linear_models_sar/site_dir_out
     out: [site_dir]
 
   # Step 12: Merge linear results into transects_extended.geojson
@@ -273,4 +274,4 @@ steps:
       site_id: prepare_sites/nzd_list
       site_dir: apply_nzd_tidal_correction/site_dir
       transects_extended_geojson: merge_linear_models/transects_extended_geojson_out
-    out: [site_xlsx, site_dir]
+    out: [site_xlsx, site_dir_out]

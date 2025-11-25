@@ -199,7 +199,7 @@ outputs:
     outputBinding:
       glob: $( "linear_" + inputs.site_id + ".json" )
 
-  site_dir:
+  site_dir_out:
     type: Directory
     outputBinding:
       glob: $(inputs.site_id)

@@ -13,6 +13,14 @@ requirements:
           import os
           import sys
 
+          # Ensure PROJ environment variables are set before importing geospatial libraries
+          # This prevents GDAL/PROJ initialization errors
+          conda_prefix = os.environ.get('CONDA_PREFIX', '/opt/conda/envs/coastsat-cwl')
+          proj_data = os.path.join(conda_prefix, 'share', 'proj')
+          if os.path.exists(proj_data):
+              os.environ.setdefault('PROJ_DATA', proj_data)
+              os.environ.setdefault('PROJ_LIB', proj_data)
+
           import geopandas as gpd
           import pandas as pd
           from shapely import line_interpolate_point
@@ -161,7 +169,7 @@ outputs:
     outputBinding:
       glob: $(inputs.site_id + ".xlsx")
 
-  site_dir:
+  site_dir_out:
     type: Directory
     outputBinding:
       glob: .

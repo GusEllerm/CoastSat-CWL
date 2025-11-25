@@ -9,7 +9,7 @@ set -e  # Exit on error
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_DATA_DIR="${SCRIPT_DIR}/CoastSat-CWL/data"
 DEFAULT_WORKFLOW="update_coastsat.cwl"
-DEFAULT_DOCKER_IMAGE="coastsat-cwl"
+DEFAULT_DOCKER_IMAGE="gusellerm/coastsat-cwl:latest"
 DEFAULT_INPUT_FILE="input_small.yml"
 
 # Colors for output
@@ -32,11 +32,19 @@ OPTIONS:
     -i, --input-file FILE    Input YAML file name (default: ${DEFAULT_INPUT_FILE})
     -w, --workflow FILE      Workflow CWL file (default: ${DEFAULT_WORKFLOW})
     -m, --docker-image IMG   Docker image name (default: ${DEFAULT_DOCKER_IMAGE})
+    -p, --no-provenance      Disable provenance tracking (enables --parallel flag)
+    -k, --keep-container     Keep container running after workflow (for inspection)
     -h, --help               Show this help message
 
 EXAMPLES:
-    # Basic usage with defaults
+    # Basic usage with defaults (provenance enabled)
     $0 -c CoastSat-CWL/tests/workflow/update_coastsat
+
+    # Disable provenance (enables --parallel flag)
+    $0 -c CoastSat-CWL/tests/workflow/update_coastsat -p
+
+    # Keep container for inspection after workflow completes
+    $0 -c CoastSat-CWL/tests/workflow/update_coastsat -k
 
     # Specify all parameters
     $0 -d /path/to/data -c /path/to/config -o /path/to/output -i input.yml
@@ -54,6 +62,8 @@ OUTPUT_DIR=""
 INPUT_FILE="${DEFAULT_INPUT_FILE}"
 WORKFLOW="${DEFAULT_WORKFLOW}"
 DOCKER_IMAGE="${DEFAULT_DOCKER_IMAGE}"
+ENABLE_PROVENANCE=true
+KEEP_CONTAINER=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -80,6 +90,14 @@ while [[ $# -gt 0 ]]; do
         -m|--docker-image)
             DOCKER_IMAGE="$2"
             shift 2
+            ;;
+        -p|--no-provenance)
+            ENABLE_PROVENANCE=false
+            shift
+            ;;
+        -k|--keep-container)
+            KEEP_CONTAINER=true
+            shift
             ;;
         -h|--help)
             usage
@@ -146,20 +164,59 @@ echo "Workflow:          ${WORKFLOW}"
 echo "Docker image:      ${DOCKER_IMAGE}"
 echo ""
 
+# Build cwltool command
+CWLTOOL_CMD="cwltool --enable-ext --no-container --basedir /data --outdir /out"
+
+if [[ "$ENABLE_PROVENANCE" == "true" ]]; then
+    CWLTOOL_CMD="${CWLTOOL_CMD} --provenance /out/prov_\$(date -u +%Y%m%dT%H%M%SZ)"
+else
+    CWLTOOL_CMD="${CWLTOOL_CMD} --parallel"
+fi
+
+CWLTOOL_CMD="${CWLTOOL_CMD} ${WORKFLOW_PATH} /cfg/${INPUT_FILE}"
+
 # Run Docker command
 echo -e "${GREEN}Running workflow...${NC}"
-docker run --rm \
+if [[ "$ENABLE_PROVENANCE" == "false" ]]; then
+    echo -e "${YELLOW}Provenance disabled - using --parallel flag${NC}"
+fi
+
+# Build docker run command
+DOCKER_RUN_ARGS=()
+if [[ "$KEEP_CONTAINER" == "false" ]]; then
+    DOCKER_RUN_ARGS+=("--rm")
+else
+    CONTAINER_NAME="coastsat-cwl-inspect-$(date +%s)"
+    DOCKER_RUN_ARGS+=("--name" "${CONTAINER_NAME}")
+    echo -e "${YELLOW}Container will be kept for inspection: ${CONTAINER_NAME}${NC}"
+fi
+
+docker run "${DOCKER_RUN_ARGS[@]}" \
   -v "${DATA_DIR}:/data" \
   -v "${CONFIG_DIR}:/cfg" \
   -v "${OUTPUT_DIR}:/out" \
+  -w /workflow \
   "${DOCKER_IMAGE}" \
-  bash -lc "cwltool --no-container \
-    --outdir /out \
-    --provenance /out/prov_\$(date -u +%Y%m%dT%H%M%SZ) \
-    ${WORKFLOW_PATH} \
-    /cfg/${INPUT_FILE}"
+  bash -lc "${CWLTOOL_CMD}"
 
 echo ""
 echo -e "${GREEN}Workflow completed!${NC}"
 echo "Results are in: ${OUTPUT_DIR}"
+
+if [[ "$KEEP_CONTAINER" == "true" ]]; then
+    CONTAINER_ID=$(docker ps -a --filter "name=${CONTAINER_NAME}" --format "{{.ID}}" | head -1)
+    echo ""
+    echo -e "${YELLOW}Container kept for inspection:${NC}"
+    echo "  Container ID: ${CONTAINER_ID}"
+    echo "  Container name: ${CONTAINER_NAME}"
+    echo ""
+    echo "To inspect the container:"
+    echo "  docker exec -it ${CONTAINER_NAME} bash"
+    echo ""
+    echo "To commit container to image:"
+    echo "  docker commit ${CONTAINER_NAME} coastsat-cwl-snapshot:latest"
+    echo ""
+    echo "To remove container when done:"
+    echo "  docker rm -f ${CONTAINER_NAME}"
+fi
 

@@ -79,3 +79,5 @@ CoastSat-CWL/test/*.out
 
 # CoastSat-Original directory (external dependency, not part of this repo)
 CoastSat-Original/
+docker_out/
+out/

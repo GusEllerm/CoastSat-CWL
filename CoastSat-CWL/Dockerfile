@@ -40,10 +40,24 @@ ENV PROJ_LIB=${CONDA_PREFIX}/share/proj
 ENV PROJ_DATA=${CONDA_PREFIX}/share/proj
 ENV GDAL_DATA=${CONDA_PREFIX}/share/gdal
 
+# Verify and ensure PROJ data is available
+# Check if PROJ data directory exists and has files, reinstall if needed
+RUN conda activate ${CONDA_ENV} && \
+    if [ ! -d "${CONDA_PREFIX}/share/proj" ] || [ -z "$(ls -A ${CONDA_PREFIX}/share/proj 2>/dev/null)" ]; then \
+        echo "PROJ data directory missing or empty, reinstalling proj-data..." && \
+        conda install -n ${CONDA_ENV} -y proj-data --force-reinstall && \
+        conda clean -a -y; \
+    fi && \
+    ls -la ${CONDA_PREFIX}/share/proj/ | head -10 || echo "PROJ data directory listing failed"
+
 # Symlinks for libs that look in /opt/conda/share/...
 RUN mkdir -p /opt/conda/share && \
-    ln -s ${PROJ_LIB} /opt/conda/share/proj || true && \
-    ln -s ${GDAL_DATA} /opt/conda/share/gdal || true
+    if [ -d "${CONDA_PREFIX}/share/proj" ]; then \
+        ln -sf ${CONDA_PREFIX}/share/proj /opt/conda/share/proj || true; \
+    fi && \
+    if [ -d "${CONDA_PREFIX}/share/gdal" ]; then \
+        ln -sf ${CONDA_PREFIX}/share/gdal /opt/conda/share/gdal || true; \
+    fi
 
 
 # Copy workflow code

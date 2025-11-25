@@ -1,2 +1,5 @@
 input_med.yml
 input_small.yml
+input_full.yml
+input_large.yml
+input_med_docker.yml
